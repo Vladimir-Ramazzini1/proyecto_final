@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sistema Olímpico — Panel</title>
+    <link href="styles.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <h3>Comité Olímpico</h3>
+          <small>Panel administrativo</small>
+        </div>
+        <nav class="nav">
+          <button data-target="dashboard" class="nav-item active">Inicio</button>
+          <button data-target="atletas" class="nav-item">Atletas</button>
+          <button data-target="entrenamientos" class="nav-item">Entrenamientos</button>
+          <button data-target="planilla" class="nav-item">Planilla</button>
+          <button data-target="exportar" class="nav-item">Exportar</button>
+          <button data-target="config" class="nav-item">Configuración</button>
+        </nav>
+      </aside>
+
+      <div class="main-area">
+        <header class="topbar">
+          <div class="top-left">
+            <h1>Panel del Comité Olímpico</h1>
+            <p class="lead">Interfaz visual para registrar atletas y entrenamientos — conecta con tu servidor Java.</p>
+          </div>
+        </header>
+
+        <main class="content">
+          <section id="page-dashboard" class="page active">
+            <div class="cards">
+              <div class="card big">
+                <h2>Resumen</h2>
+                <p id="resumenText">Cargando datos...</p>
+              </div>
+              <div class="card big">
+                <h2>Accesos rápidos</h2>
+                <div class="grid-quick">
+                  <button class="btn primary" data-target="atletas" onclick="showPage('atletas')">Gestionar Atletas</button>
+                  <button class="btn" data-target="entrenamientos" onclick="showPage('entrenamientos')">Registrar Entrenamiento</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-atletas" class="page">
+            <div class="card">
+              <h2>Registrar nuevo atleta</h2>
+              <form id="formAtleta" class="grid">
+                <input name="nombre" placeholder="Nombre completo" required />
+                <input name="edad" type="number" placeholder="Edad" required />
+                <input name="disciplina" placeholder="Disciplina (ej: atletismo)" required />
+                <input name="departamento" placeholder="Departamento" />
+                <input name="nacionalidad" placeholder="Nacionalidad" />
+                <button type="submit" class="btn primary">Registrar atleta</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <h2>Atletas</h2>
+              <div id="listaAtletas" class="lista"></div>
+            </div>
+          </section>
+
+          <section id="page-entrenamientos" class="page">
+            <div class="card">
+              <h2>Registrar entrenamiento</h2>
+              <form id="formEntreno" class="grid">
+                <select name="idAtleta" id="selectAtletas" required></select>
+                <input name="fecha" type="date" />
+                <select name="tipo">
+                  <option value="RESISTENCIA">Resistencia</option>
+                  <option value="TECNICA">Técnica</option>
+                  <option value="FUERZA">Fuerza</option>
+                </select>
+                <input name="valor" type="number" step="0.01" placeholder="Valor rendimiento" required />
+                <select name="ubicacion">
+                  <option value="nacional">Nacional</option>
+                  <option value="internacional">Internacional</option>
+                </select>
+                <input name="pais" placeholder="País (si es internacional)" />
+                <button class="btn accent">Registrar entrenamiento</button>
+              </form>
+            </div>
+          </section>
+
+          <section id="page-planilla" class="page">
+            <div class="card">
+              <h2>Planilla de Pago</h2>
+              <div class="grid">
+                <input id="planMes" type="number" min="1" max="12" placeholder="Mes (1-12)" />
+                <input id="planAnio" type="number" min="2000" max="2100" placeholder="Año" />
+                <button id="btnGenerarPlanilla" class="btn primary">Generar planilla</button>
+                <button id="btnExportarPlanilla" class="btn">Exportar planilla (CSV)</button>
+              </div>
+              <div id="planillaResultado" style="margin-top:12px;color:var(--muted);"></div>
+            </div>
+          </section>
+
+          <section id="page-exportar" class="page">
+            <div class="card">
+              <h2>Exportar datos</h2>
+              <div class="grid-exports">
+                <button id="expAtletas" class="btn">Exportar atletas (CSV)</button>
+                <button id="expEntr" class="btn">Exportar entrenamientos (CSV)</button>
+                <button id="expEstad" class="btn">Exportar estadísticas (TXT)</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-config" class="page">
+            <div class="card">
+              <h2>Configuración</h2>
+              <p>Ubicación de `db.properties` y opciones de conexión se gestionan desde el archivo en el servidor.</p>
+            </div>
+          </section>
+        </main>
+
+        <footer class="footer">Hecho con ❤️ · Interfaz por Sistema Olímpico</footer>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
