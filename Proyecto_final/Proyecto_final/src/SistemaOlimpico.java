@@ -94,7 +94,9 @@ public class SistemaOlimpico {
             System.out.println("1. Registrar nuevo atleta");
             System.out.println("2. Listar atletas");
             System.out.println("3. Buscar atleta");
-            System.out.println("4. Volver al menú principal");
+            System.out.println("4. Editar atleta");
+            System.out.println("5. Eliminar atleta");
+            System.out.println("6. Volver al menú principal");
             System.out.print("Seleccione una opción: ");
             
             int opcion = scanner.nextInt();
@@ -111,11 +113,81 @@ public class SistemaOlimpico {
                     buscarAtleta(scanner);
                     break;
                 case 4:
+                    editarAtleta(scanner);
+                    break;
+                case 5:
+                    eliminarAtleta(scanner);
+                    break;
+                case 6:
                     return;
                 default:
                     System.out.println("Opción no válida");
             }
         }
+    }
+
+    private void editarAtleta(Scanner scanner) {
+        System.out.print("Ingrese ID del atleta a editar: ");
+        String id = scanner.nextLine();
+        Atleta atleta = buscarAtletaPorId(id);
+        if (atleta == null) {
+            System.out.println("Atleta no encontrado.");
+            return;
+        }
+
+        System.out.println("Deje en blanco para mantener el valor actual.");
+        System.out.println("Nombre actual: " + atleta.getNombreCompleto());
+        System.out.print("Nuevo nombre: ");
+        String nombre = scanner.nextLine();
+        if (!nombre.trim().isEmpty()) atleta.setNombreCompleto(nombre.trim());
+
+        System.out.println("Edad actual: " + atleta.getEdad());
+        System.out.print("Nueva edad: ");
+        String edadStr = scanner.nextLine();
+        if (!edadStr.trim().isEmpty()) {
+            try { atleta.setEdad(Integer.parseInt(edadStr.trim())); } catch (NumberFormatException e) { System.out.println("Edad inválida, se mantiene la anterior."); }
+        }
+
+        System.out.println("Disciplina actual: " + atleta.getDisciplina());
+        System.out.print("Nueva disciplina: ");
+        String disc = scanner.nextLine(); if (!disc.trim().isEmpty()) atleta.setDisciplina(disc.trim());
+
+        System.out.println("Departamento actual: " + atleta.getDepartamento());
+        System.out.print("Nuevo departamento: ");
+        String dep = scanner.nextLine(); if (!dep.trim().isEmpty()) atleta.setDepartamento(dep.trim());
+
+        System.out.println("Nacionalidad actual: " + atleta.getNacionalidad());
+        System.out.print("Nueva nacionalidad: ");
+        String nat = scanner.nextLine(); if (!nat.trim().isEmpty()) atleta.setNacionalidad(nat.trim());
+
+        System.out.println("Fecha de ingreso actual: " + atleta.getFechaIngreso());
+        System.out.print("Nueva fecha de ingreso (YYYY-MM-DD) o Enter: ");
+        String fechaStr = scanner.nextLine();
+        if (!fechaStr.trim().isEmpty()) {
+            try { atleta.setFechaIngreso(LocalDate.parse(fechaStr.trim())); } catch (Exception e) { System.out.println("Fecha inválida, se mantiene la anterior."); }
+        }
+
+        if (db != null) db.guardarAtleta(atleta);
+        System.out.println("Atleta actualizado: " + atleta);
+    }
+
+    private void eliminarAtleta(Scanner scanner) {
+        System.out.print("Ingrese ID del atleta a eliminar: ");
+        String id = scanner.nextLine();
+        Atleta atleta = buscarAtletaPorId(id);
+        if (atleta == null) {
+            System.out.println("Atleta no encontrado.");
+            return;
+        }
+        System.out.print("Confirma eliminación del atleta '" + atleta.getNombreCompleto() + "'? (s/N): ");
+        String conf = scanner.nextLine();
+        if (!"s".equalsIgnoreCase(conf)) { System.out.println("Eliminación cancelada."); return; }
+
+        // Eliminar de la lista en memoria
+        atletas.remove(atleta);
+        // Eliminar de BD si aplica (cascade borrará entrenamientos)
+        if (db != null) db.deleteAtleta(atleta.getId());
+        System.out.println("Atleta eliminado.");
     }
     
     private void registrarAtleta(Scanner scanner) {
@@ -189,7 +261,9 @@ public class SistemaOlimpico {
             System.out.println("\n=== GESTIÓN DE ENTRENAMIENTOS ===");
             System.out.println("1. Registrar entrenamiento");
             System.out.println("2. Ver entrenamientos de atleta");
-            System.out.println("3. Volver al menú principal");
+            System.out.println("3. Editar entrenamiento");
+            System.out.println("4. Eliminar entrenamiento");
+            System.out.println("5. Volver al menú principal");
             System.out.print("Seleccione una opción: ");
             
             int opcion = scanner.nextInt();
@@ -203,11 +277,92 @@ public class SistemaOlimpico {
                     verEntrenamientosAtleta(scanner);
                     break;
                 case 3:
+                    editarEntrenamiento(scanner);
+                    break;
+                case 4:
+                    eliminarEntrenamiento(scanner);
+                    break;
+                case 5:
                     return;
                 default:
                     System.out.println("Opción no válida");
             }
         }
+    }
+
+    private void editarEntrenamiento(Scanner scanner) {
+        System.out.print("Ingrese ID del entrenamiento a editar: ");
+        String id = scanner.nextLine();
+        Atleta atletaEncontrado = null;
+        Entrenamiento entrenamientoEncontrado = null;
+        for (Atleta a : atletas) {
+            for (Entrenamiento e : a.getEntrenamientos()) {
+                if (e.getId().equalsIgnoreCase(id)) {
+                    atletaEncontrado = a;
+                    entrenamientoEncontrado = e;
+                    break;
+                }
+            }
+            if (entrenamientoEncontrado != null) break;
+        }
+        if (entrenamientoEncontrado == null) { System.out.println("Entrenamiento no encontrado."); return; }
+
+        System.out.println("Deje en blanco para mantener el valor actual.");
+        System.out.println("Fecha actual: " + entrenamientoEncontrado.getFecha());
+        System.out.print("Nueva fecha (YYYY-MM-DD) o Enter: ");
+        String fechaStr = scanner.nextLine();
+        LocalDate fecha = fechaStr.trim().isEmpty() ? entrenamientoEncontrado.getFecha() : LocalDate.parse(fechaStr.trim());
+
+        System.out.println("Tipo actual: " + entrenamientoEncontrado.getTipo());
+        System.out.print("Nuevo tipo (RESISTENCIA/TECNICA/FUERZA) o Enter: ");
+        String tipoStr = scanner.nextLine();
+        TipoEntrenamiento tipo = tipoStr.trim().isEmpty() ? entrenamientoEncontrado.getTipo() : TipoEntrenamiento.valueOf(tipoStr.trim().toUpperCase());
+
+        System.out.println("Valor actual: " + entrenamientoEncontrado.getValorRendimiento());
+        System.out.print("Nuevo valor (numero) o Enter: ");
+        String valorStr = scanner.nextLine();
+        double valor = valorStr.trim().isEmpty() ? entrenamientoEncontrado.getValorRendimiento() : Double.parseDouble(valorStr.trim());
+
+        System.out.println("Ubicación actual: " + entrenamientoEncontrado.getUbicacion());
+        System.out.print("Nueva ubicación (nacional/internacional) o Enter: ");
+        String ubic = scanner.nextLine(); if (ubic.trim().isEmpty()) ubic = entrenamientoEncontrado.getUbicacion();
+
+        System.out.println("País actual: " + entrenamientoEncontrado.getPais());
+        System.out.print("Nuevo país o Enter: ");
+        String pais = scanner.nextLine(); if (pais.trim().isEmpty()) pais = entrenamientoEncontrado.getPais();
+
+        // Reemplazar entrenamiento
+        Entrenamiento nuevo = new Entrenamiento(entrenamientoEncontrado.getId(), atletaEncontrado.getId(), fecha, tipo, valor, ubic, pais);
+        List<Entrenamiento> lista = atletaEncontrado.getEntrenamientos();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId().equalsIgnoreCase(entrenamientoEncontrado.getId())) {
+                lista.set(i, nuevo);
+                break;
+            }
+        }
+        if (db != null) db.guardarEntrenamiento(nuevo);
+        System.out.println("Entrenamiento actualizado.");
+    }
+
+    private void eliminarEntrenamiento(Scanner scanner) {
+        System.out.print("Ingrese ID del entrenamiento a eliminar: ");
+        String id = scanner.nextLine();
+        for (Atleta a : atletas) {
+            Iterator<Entrenamiento> it = a.getEntrenamientos().iterator();
+            while (it.hasNext()) {
+                Entrenamiento e = it.next();
+                if (e.getId().equalsIgnoreCase(id)) {
+                    System.out.print("Confirma eliminación del entrenamiento '" + e.getId() + "'? (s/N): ");
+                    String conf = scanner.nextLine();
+                    if (!"s".equalsIgnoreCase(conf)) { System.out.println("Eliminación cancelada."); return; }
+                    it.remove();
+                    if (db != null) db.deleteEntrenamiento(id);
+                    System.out.println("Entrenamiento eliminado.");
+                    return;
+                }
+            }
+        }
+        System.out.println("Entrenamiento no encontrado.");
     }
     
     private void registrarEntrenamiento(Scanner scanner) {
@@ -453,7 +608,8 @@ public class SistemaOlimpico {
             System.out.println("\n=== GESTIÓN FINANCIERA (PLANILLA) ===");
             System.out.println("1. Calcular pago mensual de atleta");
             System.out.println("2. Reporte de planilla completa");
-            System.out.println("3. Volver al menú principal");
+            System.out.println("3. Editar parámetros de planilla");
+            System.out.println("4. Volver al menú principal");
             System.out.print("Seleccione una opción: ");
             
             int opcion = scanner.nextInt();
@@ -467,11 +623,42 @@ public class SistemaOlimpico {
                     generarReportePlanillaCompleta();
                     break;
                 case 3:
+                    editarParametrosPlanilla(scanner);
+                    break;
+                case 4:
                     return;
                 default:
                     System.out.println("Opción no válida");
             }
         }
+    }
+
+    private void editarParametrosPlanilla(Scanner scanner) {
+        CalculadoraPlanilla calc = new CalculadoraPlanilla();
+        System.out.println("Parámetros actuales:");
+        System.out.printf("1. Pago base por entrenamiento: %.2f\n", calc.getPagoBasePorEntrenamiento());
+        System.out.printf("2. Bono por entreno internacional: %.2f\n", calc.getBonoExtranjero());
+        System.out.printf("3. Bono por superar mejor marca: %.2f\n", calc.getBonoMejorMarca());
+
+        System.out.print("Ingrese nueva tarifa pago base (Enter para mantener): ");
+        String s1 = scanner.nextLine();
+        if (!s1.trim().isEmpty()) {
+            try { calc.setPagoBasePorEntrenamiento(Double.parseDouble(s1.trim())); } catch (Exception e) { System.out.println("Valor inválido"); }
+        }
+
+        System.out.print("Ingrese nuevo bono por entrenamiento internacional (Enter para mantener): ");
+        String s2 = scanner.nextLine();
+        if (!s2.trim().isEmpty()) {
+            try { calc.setBonoExtranjero(Double.parseDouble(s2.trim())); } catch (Exception e) { System.out.println("Valor inválido"); }
+        }
+
+        System.out.print("Ingrese nuevo bono por mejor marca (Enter para mantener): ");
+        String s3 = scanner.nextLine();
+        if (!s3.trim().isEmpty()) {
+            try { calc.setBonoMejorMarca(Double.parseDouble(s3.trim())); } catch (Exception e) { System.out.println("Valor inválido"); }
+        }
+
+        System.out.println("Parámetros actualizados y guardados en planilla.properties");
     }
     
     private void calcularPagoMensual(Scanner scanner) {
@@ -697,6 +884,86 @@ public class SistemaOlimpico {
             db.guardarEntrenamiento(ent);
         }
         return true;
+    }
+
+    // API: editar atleta por id con datos planos en map (claves: nombre,edad,disciplina,departamento,nacionalidad,fechaIngreso)
+    public synchronized boolean editarAtletaDesdeApi(String id, Map<String,String> data) {
+        Atleta atleta = buscarAtletaPorId(id);
+        if (atleta == null) return false;
+        if (data.containsKey("nombre")) {
+            atleta.setNombreCompleto(data.get("nombre"));
+        }
+        if (data.containsKey("edad")) {
+            try { atleta.setEdad(Integer.parseInt(data.get("edad"))); } catch (Exception e) { /* ignore */ }
+        }
+        if (data.containsKey("disciplina")) atleta.setDisciplina(data.get("disciplina"));
+        if (data.containsKey("departamento")) atleta.setDepartamento(data.get("departamento"));
+        if (data.containsKey("nacionalidad")) atleta.setNacionalidad(data.get("nacionalidad"));
+        if (data.containsKey("fechaIngreso")) {
+            try { atleta.setFechaIngreso(LocalDate.parse(data.get("fechaIngreso"))); } catch (Exception e) { /* ignore */ }
+        }
+        if (db != null) db.guardarAtleta(atleta);
+        return true;
+    }
+
+    public synchronized boolean eliminarAtletaDesdeApi(String id) {
+        Atleta atleta = buscarAtletaPorId(id);
+        if (atleta == null) return false;
+        atletas.remove(atleta);
+        if (db != null) db.deleteAtleta(id);
+        return true;
+    }
+
+    // API: editar entrenamiento por id con campos posibles: idAtleta, fecha, tipo, valor, ubicacion, pais
+    public synchronized boolean editarEntrenamientoDesdeApi(String id, Map<String,String> data) {
+        Atleta atletaEncontrado = null;
+        Entrenamiento entEncontrado = null;
+        for (Atleta a : atletas) {
+            for (Entrenamiento e : a.getEntrenamientos()) {
+                if (e.getId().equalsIgnoreCase(id)) { atletaEncontrado = a; entEncontrado = e; break; }
+            }
+            if (entEncontrado != null) break;
+        }
+        if (entEncontrado == null) return false;
+
+        String idAtleta = data.getOrDefault("idAtleta", entEncontrado.getIdAtleta());
+        LocalDate fecha = entEncontrado.getFecha();
+        if (data.containsKey("fecha") && !data.get("fecha").isEmpty()) {
+            try { fecha = LocalDate.parse(data.get("fecha")); } catch (Exception ex) { }
+        }
+        TipoEntrenamiento tipo = entEncontrado.getTipo();
+        if (data.containsKey("tipo") && !data.get("tipo").isEmpty()) {
+            try { tipo = TipoEntrenamiento.valueOf(data.get("tipo").toUpperCase()); } catch (Exception ex) { }
+        }
+        double valor = entEncontrado.getValorRendimiento();
+        if (data.containsKey("valor") && !data.get("valor").isEmpty()) {
+            try { valor = Double.parseDouble(data.get("valor")); } catch (Exception ex) { }
+        }
+        String ubic = data.getOrDefault("ubicacion", entEncontrado.getUbicacion());
+        String pais = data.getOrDefault("pais", entEncontrado.getPais());
+
+        Entrenamiento nuevo = new Entrenamiento(entEncontrado.getId(), idAtleta, fecha, tipo, valor, ubic, pais);
+        List<Entrenamiento> lista = atletaEncontrado.getEntrenamientos();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId().equalsIgnoreCase(entEncontrado.getId())) { lista.set(i, nuevo); break; }
+        }
+        if (db != null) db.guardarEntrenamiento(nuevo);
+        return true;
+    }
+
+    public synchronized boolean eliminarEntrenamientoDesdeApi(String id) {
+        for (Atleta a : atletas) {
+            Iterator<Entrenamiento> it = a.getEntrenamientos().iterator();
+            while (it.hasNext()) {
+                Entrenamiento e = it.next();
+                if (e.getId().equalsIgnoreCase(id)) {
+                    it.remove();
+                    if (db != null) db.deleteEntrenamiento(id);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
     private void guardarAtletasJSON() {

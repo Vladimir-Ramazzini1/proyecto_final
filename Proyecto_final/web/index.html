@@ -73,6 +73,7 @@
               <h2>Registrar entrenamiento</h2>
               <form id="formEntreno" class="grid">
                 <select name="idAtleta" id="selectAtletas" required></select>
+                <button type="button" id="btnVerEntrenos" class="btn">Ver entrenamientos</button>
                 <input name="fecha" type="date" />
                 <select name="tipo">
                   <option value="RESISTENCIA">Resistencia</option>
@@ -87,6 +88,7 @@
                 <input name="pais" placeholder="País (si es internacional)" />
                 <button class="btn accent">Registrar entrenamiento</button>
               </form>
+              <div id="listaEntrenamientos" style="margin-top:12px;color:var(--muted);"></div>
             </div>
           </section>
 

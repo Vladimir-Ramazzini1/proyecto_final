@@ -143,6 +143,28 @@ public class Database {
         }
     }
 
+    public void deleteAtleta(String id) {
+        String sql = "DELETE FROM atletas WHERE id = ?";
+        try (Connection conn = connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Error eliminando atleta en BD: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteEntrenamiento(String id) {
+        String sql = "DELETE FROM entrenamientos WHERE id = ?";
+        try (Connection conn = connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Error eliminando entrenamiento en BD: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     public List<Atleta> cargarAtletas() {
         List<Atleta> lista = new ArrayList<>();
         String sql = "SELECT id,nombre,edad,disciplina,departamento,nacionalidad,fechaIngreso FROM atletas";

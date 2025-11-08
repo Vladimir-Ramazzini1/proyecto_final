@@ -69,6 +69,39 @@ public class WebServer {
             } finally { exchange.close(); }
         });
 
+        // API: editar/eliminar atleta por path /api/atletas/{id}
+        server.createContext("/api/atletas/", exchange -> {
+            try {
+                String method = exchange.getRequestMethod();
+                String path = exchange.getRequestURI().getPath();
+                String[] parts = path.split("/");
+                String id = parts.length>3 ? parts[3] : null;
+                if (id == null || id.isEmpty()) { exchange.sendResponseHeaders(400, -1); exchange.close(); return; }
+
+                if ("PUT".equalsIgnoreCase(method)) {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
+                    Map<String,String> data = parseJsonSimple(body);
+                    boolean ok = sistema.editarAtletaDesdeApi(id, data);
+                    if (!ok) { exchange.sendResponseHeaders(404, -1); }
+                    else {
+                        String out = atletaToJson(sistema.getAtletasApi().stream().filter(a->a.getId().equalsIgnoreCase(id)).findFirst().orElse(null));
+                        if (out == null) { exchange.sendResponseHeaders(500, -1); }
+                        else { byte[] bout = out.getBytes("UTF-8"); exchange.getResponseHeaders().set("Content-Type","application/json; charset=utf-8"); exchange.sendResponseHeaders(200, bout.length); exchange.getResponseBody().write(bout); }
+                    }
+                } else if ("DELETE".equalsIgnoreCase(method)) {
+                    boolean ok = sistema.eliminarAtletaDesdeApi(id);
+                    if (!ok) { exchange.sendResponseHeaders(404, -1); }
+                    else { exchange.sendResponseHeaders(204, -1); }
+                } else {
+                    exchange.sendResponseHeaders(405, -1);
+                }
+            } catch (Exception e) {
+                String msg = "Error API atleta individual: " + e.getMessage();
+                exchange.sendResponseHeaders(500, msg.length());
+                exchange.getResponseBody().write(msg.getBytes());
+            } finally { exchange.close(); }
+        });
+
         // API: entrenamientos
         server.createContext("/api/entrenamientos", exchange -> {
             try {
@@ -122,6 +155,39 @@ public class WebServer {
                 exchange.getResponseBody().write(msg.getBytes());
             } finally { exchange.close(); }
         });
+
+        // API: editar/eliminar entrenamiento por path /api/entrenamientos/{id}
+        server.createContext("/api/entrenamientos/", exchange -> {
+            try {
+                String method = exchange.getRequestMethod();
+                String path = exchange.getRequestURI().getPath();
+                String[] parts = path.split("/");
+                String id = parts.length>3 ? parts[3] : null;
+                if (id == null || id.isEmpty()) { exchange.sendResponseHeaders(400, -1); exchange.close(); return; }
+
+                if ("PUT".equalsIgnoreCase(method)) {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
+                    Map<String,String> data = parseJsonSimple(body);
+                    boolean ok = sistema.editarEntrenamientoDesdeApi(id, data);
+                    if (!ok) { exchange.sendResponseHeaders(404, -1); }
+                    else { byte[] bout = entToJson(findEntrenamientoById(sistema.getAtletasApi(), id)).getBytes("UTF-8"); exchange.getResponseHeaders().set("Content-Type","application/json; charset=utf-8"); exchange.sendResponseHeaders(200, bout.length); exchange.getResponseBody().write(bout); }
+                } else if ("DELETE".equalsIgnoreCase(method)) {
+                    boolean ok = sistema.eliminarEntrenamientoDesdeApi(id);
+                    if (!ok) { exchange.sendResponseHeaders(404, -1); }
+                    else { exchange.sendResponseHeaders(204, -1); }
+                } else {
+                    exchange.sendResponseHeaders(405, -1);
+                }
+            } catch (Exception e) {
+                String msg = "Error API entreno individual: " + e.getMessage();
+                exchange.sendResponseHeaders(500, msg.length());
+                exchange.getResponseBody().write(msg.getBytes());
+            } finally { exchange.close(); }
+        });
+
+        // helper to find entrenamiento
+        // (small util used by the handler above)
+        // placed here as private static method
 
         // API: planilla (JSON) -> calcula pagos por atleta para mes/año
         server.createContext("/api/planilla", exchange -> {
@@ -311,6 +377,16 @@ public class WebServer {
             }
         }
         return map;
+    }
+
+    private static Entrenamiento findEntrenamientoById(List<Atleta> atletas, String id) {
+        if (id == null) return null;
+        for (Atleta a : atletas) {
+            for (Entrenamiento e : a.getEntrenamientos()) {
+                if (e.getId().equalsIgnoreCase(id)) return e;
+            }
+        }
+        return null;
     }
 
     // Export estadisticas as TXT

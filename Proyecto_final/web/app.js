@@ -16,7 +16,7 @@ async function fetchAtletas(){
     if (lista) {
       const card = document.createElement('div');
       card.className = 'atleta-card';
-      card.innerHTML = `<div class="atleta-info"><b>${escapeHtml(a.nombreCompleto)}</b><small>${a.disciplina} • ${a.departamento || ''}</small></div><div><button class="btn" onclick="mostrarEntrenos('${a.id}')">Entrenos</button></div>`;
+      card.innerHTML = `<div class="atleta-info"><b>${escapeHtml(a.nombreCompleto)}</b><small>${a.disciplina} • ${a.departamento || ''}</small></div><div><button class="btn" onclick="mostrarEntrenos('${a.id}')">Entrenos</button> <button class="btn" onclick="editarAtleta('${a.id}')">Editar</button> <button class="btn" onclick="eliminarAtleta('${a.id}')">Eliminar</button></div>`;
       lista.appendChild(card);
     }
 
@@ -30,6 +30,34 @@ async function fetchAtletas(){
   // actualizar resumen
   const resumen = document.getElementById('resumenText');
   if (resumen) resumen.textContent = `Atletas registrados: ${data.length}`;
+}
+
+async function editarAtleta(id) {
+  try {
+    const nombre = prompt('Nuevo nombre (dejar vacío para mantener):');
+    const edad = prompt('Nueva edad (dejar vacío para mantener):');
+    const disciplina = prompt('Nueva disciplina (dejar vacío para mantener):');
+    const departamento = prompt('Nuevo departamento (dejar vacío para mantener):');
+    const nacionalidad = prompt('Nueva nacionalidad (dejar vacío para mantener):');
+    const fecha = prompt('Nueva fecha de ingreso YYYY-MM-DD (dejar vacío para mantener):');
+    const payload = {};
+    if (nombre) payload.nombre = nombre;
+    if (edad) payload.edad = edad;
+    if (disciplina) payload.disciplina = disciplina;
+    if (departamento) payload.departamento = departamento;
+    if (nacionalidad) payload.nacionalidad = nacionalidad;
+    if (fecha) payload.fechaIngreso = fecha;
+    const res = await fetch(`/api/atletas/${encodeURIComponent(id)}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    if (res.ok) { alert('Atleta actualizado'); fetchAtletas(); } else { const t = await res.text(); alert('Error: '+t); }
+  } catch(err){ alert('Error: '+err.message); }
+}
+
+async function eliminarAtleta(id) {
+  try {
+    if (!confirm('Eliminar atleta '+id+'?')) return;
+    const res = await fetch(`/api/atletas/${encodeURIComponent(id)}`, {method:'DELETE'});
+    if (res.status===204) { alert('Atleta eliminado'); fetchAtletas(); } else { const t=await res.text(); alert('Error: '+t); }
+  } catch(err){ alert('Error: '+err.message); }
 }
 
 document.getElementById('formAtleta').addEventListener('submit', async (e)=>{
@@ -54,9 +82,48 @@ document.getElementById('formEntreno').addEventListener('submit', async (e)=>{
 async function mostrarEntrenos(idAtleta){
   const res = await fetch(api.entrenos + '?atletaId=' + encodeURIComponent(idAtleta));
   const data = await res.json();
-  let msg = `Entrenamientos (${data.length}):\n`;
-  data.forEach(e=> msg += `${e.fecha} | ${e.tipo} | ${e.valor}\n`);
-  alert(msg);
+  if (!data.length) { alert('No hay entrenamientos.'); return; }
+  let html = '<ul style="padding-left:16px">';
+  data.forEach(e=> html += `<li>${e.fecha} | ${e.tipo} | ${e.valor} <button class="btn" onclick="editarEntreno('${e.id}')">Editar</button> <button class="btn" onclick="eliminarEntreno('${e.id}')">Eliminar</button></li>`);
+  html += '</ul>';
+  // Mostrar en una nueva ventana simple
+  const w = window.open('','Entrenamientos','width=600,height=400');
+  w.document.title = 'Entrenamientos de '+idAtleta;
+  w.document.body.innerHTML = `<h3>Entrenamientos de ${escapeHtml(idAtleta)}</h3>${html}`;
+}
+
+// Ver entrenamientos desde la sección de registro
+const btnVer = document.getElementById('btnVerEntrenos');
+if (btnVer) btnVer.addEventListener('click', ()=>{
+  const sel = document.getElementById('selectAtletas');
+  if (!sel) return; const id = sel.value; if (!id) { alert('Seleccione un atleta'); return; }
+  mostrarEntrenos(id);
+});
+
+async function editarEntreno(id) {
+  try {
+    const fecha = prompt('Nueva fecha YYYY-MM-DD (dejar vacío para mantener):');
+    const tipo = prompt('Nuevo tipo (RESISTENCIA/TECNICA/FUERZA) (dejar vacío para mantener):');
+    const valor = prompt('Nuevo valor (dejar vacío para mantener):');
+    const ubic = prompt('Nueva ubicación (nacional/internacional) (dejar vacío para mantener):');
+    const pais = prompt('Nuevo país (dejar vacío para mantener):');
+    const payload = {};
+    if (fecha) payload.fecha = fecha;
+    if (tipo) payload.tipo = tipo;
+    if (valor) payload.valor = valor;
+    if (ubic) payload.ubicacion = ubic;
+    if (pais) payload.pais = pais;
+    const res = await fetch(`/api/entrenamientos/${encodeURIComponent(id)}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    if (res.ok) { alert('Entrenamiento actualizado'); } else { const t = await res.text(); alert('Error: '+t); }
+  } catch(err){ alert('Error: '+err.message); }
+}
+
+async function eliminarEntreno(id) {
+  try {
+    if (!confirm('Eliminar entrenamiento '+id+'?')) return;
+    const res = await fetch(`/api/entrenamientos/${encodeURIComponent(id)}`, {method:'DELETE'});
+    if (res.status===204) { alert('Entrenamiento eliminado'); } else { const t=await res.text(); alert('Error: '+t); }
+  } catch(err){ alert('Error: '+err.message); }
 }
 
 // navigation

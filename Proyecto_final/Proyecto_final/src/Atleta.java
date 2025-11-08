@@ -33,6 +33,14 @@ public class Atleta {
     public LocalDate getFechaIngreso() { return fechaIngreso; }
     public List<Entrenamiento> getEntrenamientos() { return entrenamientos; }
     
+    // Setters para permitir edición desde el sistema
+    public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
+    public void setEdad(int edad) { this.edad = edad; }
+    public void setDisciplina(String disciplina) { this.disciplina = disciplina; }
+    public void setDepartamento(String departamento) { this.departamento = departamento; }
+    public void setNacionalidad(String nacionalidad) { this.nacionalidad = nacionalidad; }
+    public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
+    
     public void agregarEntrenamiento(Entrenamiento entrenamiento) {
         this.entrenamientos.add(entrenamiento);
     }
